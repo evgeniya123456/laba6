@@ -1,0 +1,131 @@
+import math
+import os
+import re
+
+
+class Shape:
+    def area(self):
+        raise NotImplementedError
+
+    def perimeter(self):
+        raise NotImplementedError
+
+# Класи фігур
+class Triangle(Shape):
+    def __init__(self, a, b, c):
+        self.a, self.b, self.c = a, b, c
+
+    def perimeter(self):
+        return self.a + self.b + self.c
+
+    def area(self):
+        s = self.perimeter() / 2
+        try:
+            return math.sqrt(s * (s - self.a) * (s - self.b) * (s - self.c))
+        except ValueError:
+            return 0
+
+class Rectangle(Shape):
+    def __init__(self, a, b):
+        self.a, self.b = a, b
+
+    def perimeter(self):
+        return 2 * (self.a + self.b)
+
+    def area(self):
+        return self.a * self.b
+
+class Trapeze(Shape):
+    def __init__(self, a, b, c, d):
+        self.a, self.b, self.c, self.d = a, b, c, d
+
+    def perimeter(self):
+        return self.a + self.b + self.c + self.d
+
+    def area(self):
+        try:
+
+            s = (self.a + self.b + self.c + self.d) / 2
+            h = (2 / abs(self.a - self.b)) * math.sqrt(
+                (s - self.a) * (s - self.b) * (s - self.a - self.c) * (s - self.a - self.d)
+            )
+            return ((self.a + self.b) / 2) * h
+        except (ZeroDivisionError, ValueError):
+            return 0
+
+class Parallelogram(Shape):
+    def __init__(self, a, b, h):
+        self.a, self.b, self.h = a, b, h
+
+    def perimeter(self):
+        return 2 * (self.a + self.b)
+
+    def area(self):
+        return self.a * self.h
+
+class Circle(Shape):
+    def __init__(self, r):
+        self.r = r
+
+    def perimeter(self):
+        return 2 * math.pi * self.r
+
+    def area(self):
+        return math.pi * self.r ** 2
+
+
+def parse_shape(line):
+    parts = re.split(r'\s+', line.strip())
+    if not parts:
+        return None
+
+    shape_type = parts[0]
+    try:
+        params = list(map(float, parts[1:]))
+    except ValueError:
+        return None
+
+    shape_classes = {
+        'Triangle': Triangle,
+        'Rectangle': Rectangle,
+        'Trapeze': Trapeze,
+        'Parallelogram': Parallelogram,
+        'Circle': Circle
+    }
+
+    cls = shape_classes.get(shape_type)
+    if cls:
+        try:
+            return cls(*params)
+        except TypeError:
+            return None
+    return None
+
+
+def process_file(filename):
+    shapes = []
+    with open(filename, 'r') as file:
+        for line in file:
+            shape = parse_shape(line)
+            if shape:
+                shapes.append(shape)
+
+    if not shapes:
+        print(f"\n⚠️ Файл {filename} не містить жодної валідної фігури.")
+        return
+
+    max_area_shape = max(shapes, key=lambda s: s.area())
+    max_perimeter_shape = max(shapes, key=lambda s: s.perimeter())
+
+    print(f"\n📄 Результати для файлу: {filename}")
+    print(f"🔷 Найбільша площа: {type(max_area_shape).__name__}, площа = {max_area_shape.area():.2f}")
+    print(f"🔶 Найбільший периметр: {type(max_perimeter_shape).__name__}, периметр = {max_perimeter_shape.perimeter():.2f}")
+
+
+if __name__ == "__main__":
+    filenames = ["input01.txt", "input02.txt", "input03.txt"]
+    for fname in filenames:
+        if os.path.exists(fname):
+            process_file(fname)
+        else:
+            print(f"\n❌ Файл {fname} не знайдено.")
